@@ -58,13 +58,27 @@ function remap(x, inMin, inMax, outMin, outMax) {
   return ((x - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;
 }
 
+function limitCalls(f, interval) {
+
+  let lastCalled = Date.now();
+
+  function wrapper(...args) {
+    if (Date.now() - lastCalled >= interval) {
+      lastCalled = Date.now();
+      f(...args);
+    }
+  }
+
+  return wrapper;
+}
+
 function draw(x, y, zoom) {
   const CI_START = -2.5 / zoom + x;
   const CI_END = 1 / zoom + x;
 
   const CJ_START = -1 / zoom + y;
   const CJ_END = 1 / zoom + y;
-  
+
   for (let i = 0; i < canvas.width; ++i) {
     for (let j = 0; j < canvas.height; ++j) {
       const it = i / canvas.width;
@@ -79,6 +93,8 @@ function draw(x, y, zoom) {
     }
   }
 }
+
+draw = limitCalls(draw, 300);
 
 let zoom = 1;
 let x = 0;
@@ -97,9 +113,9 @@ function resetView() {
 
 canvas.addEventListener('wheel', function(wheelEvent) {
   if (wheelEvent.deltaY < 0) {
-    zoom *= 1.1;
+    zoom *= 1.3;
   } else {
-    zoom /= 1.1;
+    zoom /= 1.3;
   }
 
   redraw();
@@ -119,8 +135,6 @@ canvas.addEventListener('mousemove', function(e) {
 
     y += remap(dragY - e.offsetY, -canvas.height / 2, canvas.height / 2,
       -FRAC_HEIGHT / 2, FRAC_HEIGHT / 2) / 10;
-
-    redraw();
   }
 });
 
@@ -132,5 +146,6 @@ canvas.addEventListener('mousedown', function(e) {
 
 canvas.addEventListener('mouseup', function(e) {
   dragging = false;
+  redraw();
 });
 
