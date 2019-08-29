@@ -9,7 +9,7 @@ You can play around with it [here](https://rsazizov.github.io/mandelbrot/index.h
 ## Roadmap
 
 - [x] Escape Time Algorithm
-- [ ] Zooming
+- [x] Zooming
 - [ ] Optimizations
 - [ ] Coloring
 - [ ] Hardware Acceleration
