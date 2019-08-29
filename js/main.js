@@ -3,6 +3,14 @@
 const canvas = document.querySelector('#canvas');
 const ctx = canvas.getContext('2d');
 
+const N_WORKERS = 8;
+let workers = [];
+
+for (let i = 0; i < N_WORKERS; ++i) {
+  workers[i] = new Worker('js/worker.js');
+  workers[i].onmessage = onWorkerFinish;
+}
+
 function drawPixel(x, y, color) {
   color = color || 'black';
 
@@ -10,107 +18,21 @@ function drawPixel(x, y, color) {
   ctx.fillRect(x, y, 1, 1);
 }
 
-function cardioid(im, re) {
-  const q = Math.pow((im - 0.25), 2) + re * re;
-  return q * (q + (im - 0.25)) <= 0.25 * re * re;
-}
-
-function mandelbrot(ci0, cj0) {
-  if (cardioid(ci0, cj0)) {
-    return 0;
-  }
-
-  const MAX_ITERS = 1000;
-  const THRESHOLD = 2;
-
-  let included = true;
-  let maxIters = 0;
-
-  let fi = 0;
-  let fj = 0;
-
-  let nIters = 0;
-  for (let i = 0; i < MAX_ITERS; ++i) {
-    if (Math.hypot(fi, fj) > THRESHOLD) {
-      included = false;
-      nIters = i;
-
-      if (nIters > maxIters) {
-        maxIters = nIters;
-      }
-
-      break;
-    }
-
-    const tmpfi = fi * fi - fj * fj + ci0;
-    fj = 2 * fi * fj + cj0;
-
-    fi = tmpfi;
-  }
-
-  if (included) {
-    return 0;
-  } else {
-    return nIters;
-  }
-}
-
-function lerp(start, end, t) {
-  return start + (end - start) * t;
-}
-
 function remap(x, inMin, inMax, outMin, outMax) {
   return ((x - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;
 }
 
-function limitCalls(f, interval) {
+let zoom = 1;
+let x = 0;
+let y = 0;
 
-  let lastCalled = Date.now();
+function onWorkerFinish(e) {
+  const input = e.data.input;
+  const result = e.data.result;
 
-  function wrapper(...args) {
-    if (Date.now() - lastCalled >= interval) {
-      lastCalled = Date.now();
-      f(...args);
-    }
-  }
-
-  return wrapper;
-}
-
-function draw(x, y, zoom) {
-  const CI_START = -2.5 / zoom + x;
-  const CI_END = 1 / zoom + x;
-
-  const CJ_START = -1 / zoom + y;
-  const CJ_END = 1 / zoom + y;
-
-  const iters = [];
-  let maxIters = 0;
-
-  for (let i = 0; i < canvas.width; ++i) {
-    iters[iters.length] = [];
-    
-    for (let j = 0; j < canvas.height; ++j) {
-      const it = i / canvas.width;
-      const jt = j / canvas.height;
-
-      const ci = lerp(CI_START, CI_END, it);
-      const cj = lerp(CJ_START, CJ_END, jt);
-
-      const nIters = mandelbrot(ci, cj);
-
-      if (nIters > maxIters) {
-        maxIters = nIters;
-      }
-
-      iters[iters.length - 1][j] = nIters;
-    }
-  }
-
-  for (let i = 0; i < canvas.width; ++i) {
-    for (let j = 0; j < canvas.height; ++j) {
-
-      let nIters = iters[i][j] / maxIters;
+  for (let i = 0; i < input.width; ++i) {
+    for (let j = 0; j < input.height; ++j) {
+      const nIters = result.iters[i][j] ;
 
       let color;
       if (nIters == 0) {
@@ -119,19 +41,29 @@ function draw(x, y, zoom) {
         color = `hsl(${nIters * 359}, 50%, 50%)`;
       }
 
-      drawPixel(i, j, color);
+      drawPixel(i + input.x, j + input.y, color);
     }
   }
 }
 
-draw = limitCalls(draw, 300);
-
-let zoom = 1;
-let x = 0;
-let y = 0;
-
 function redraw() {
-  draw(x, y, zoom);
+  const REG_WIDTH = canvas.width;
+  const REG_HEIGHT = Math.ceil(canvas.height / N_WORKERS);
+
+  for (let i = 0; i < N_WORKERS; ++i) {
+    workers[i].postMessage({
+      x: 0,
+      y: REG_HEIGHT * i,
+      width: REG_WIDTH,
+      height: REG_HEIGHT,
+      totalWidth: canvas.width,
+      totalHeight: canvas.height,
+      mx: x,
+      my: y,
+      zoom: zoom
+    });
+  }
+
 }
 
 function resetView() {
