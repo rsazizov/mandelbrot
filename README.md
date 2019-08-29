@@ -11,6 +11,7 @@ You can play around with it [here](https://rsazizov.github.io/mandelbrot/index.h
 - [x] Escape Time Algorithm
 - [x] Zooming
 - [ ] Optimizations
-- [ ] Coloring
+- [ ] Histogram Coloring
+- [ ] Smoothg Coloring
 - [ ] Hardware Acceleration
 

@@ -17,13 +17,14 @@ function cardioid(im, re) {
 
 function mandelbrot(ci0, cj0) {
   if (cardioid(ci0, cj0)) {
-    return 'black';
+    return 0;
   }
 
   const MAX_ITERS = 1000;
   const THRESHOLD = 2;
 
   let included = true;
+  let maxIters = 0;
 
   let fi = 0;
   let fj = 0;
@@ -33,6 +34,11 @@ function mandelbrot(ci0, cj0) {
     if (Math.hypot(fi, fj) > THRESHOLD) {
       included = false;
       nIters = i;
+
+      if (nIters > maxIters) {
+        maxIters = nIters;
+      }
+
       break;
     }
 
@@ -43,10 +49,9 @@ function mandelbrot(ci0, cj0) {
   }
 
   if (included) {
-    return 'black';
+    return 0;
   } else {
-    const r = nIters / MAX_ITERS * 255;
-    return `rgb(${r}, ${r}, ${r})`;
+    return nIters;
   }
 }
 
@@ -79,7 +84,12 @@ function draw(x, y, zoom) {
   const CJ_START = -1 / zoom + y;
   const CJ_END = 1 / zoom + y;
 
+  const iters = [];
+  let maxIters = 0;
+
   for (let i = 0; i < canvas.width; ++i) {
+    iters[iters.length] = [];
+    
     for (let j = 0; j < canvas.height; ++j) {
       const it = i / canvas.width;
       const jt = j / canvas.height;
@@ -87,7 +97,27 @@ function draw(x, y, zoom) {
       const ci = lerp(CI_START, CI_END, it);
       const cj = lerp(CJ_START, CJ_END, jt);
 
-      const color = mandelbrot(ci, cj);
+      const nIters = mandelbrot(ci, cj);
+
+      if (nIters > maxIters) {
+        maxIters = nIters;
+      }
+
+      iters[iters.length - 1][j] = nIters;
+    }
+  }
+
+  for (let i = 0; i < canvas.width; ++i) {
+    for (let j = 0; j < canvas.height; ++j) {
+
+      let nIters = iters[i][j] / maxIters;
+
+      let color;
+      if (nIters == 0) {
+        color = 'black';
+      } else {
+        color = `hsl(${nIters * 359}, 50%, 50%)`;
+      }
 
       drawPixel(i, j, color);
     }
