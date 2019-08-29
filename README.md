@@ -12,6 +12,6 @@ You can play around with it [here](https://rsazizov.github.io/mandelbrot/index.h
 - [x] Zooming
 - [ ] Optimizations
 - [ ] Histogram Coloring
-- [ ] Smoothg Coloring
+- [ ] Smooth Coloring
 - [ ] Hardware Acceleration
 
