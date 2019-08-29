@@ -6,14 +6,36 @@
     <link rel="stylesheet" href="css/main.css">
   </head>
   <body>
-    <div id="options">
+    <div id="sidebar">
+      <h2>View</h2>
       <button id="reset-btn" onclick="resetView()">
         Reset View
       </button>
+
+      <h2>Perfomance</h2>
+      <p>Size</p>
+
+      <select onchange="updateSize(this.value)">
+        <option value="320x240">320x240</option>
+        <option value="640x480">640x480</option>
+        <option value="1024x768">1024x768</option>
+        <option value="1280x720">1280x720</option>
+      </select>
+
+      <p>Workers</p>
+      <input onchange="updateWorkers(this.value)" type="number"
+        min="1" max="128" value="2">
+
+      <h3>Progress</h3>
+      <p id="status" />
+      <p id="progress" />
     </div>
-    <canvas id='canvas'>
-      No Mandelbrot for you :(
-    </canvas>
+
+    <div id="canvas-container">
+      <canvas id='canvas'>
+        No Mandelbrot for you :(
+      </canvas>
+    </div>
 
     <!--Keep it last-->
     <script src="js/main.js"></script>

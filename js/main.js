@@ -3,12 +3,36 @@
 const canvas = document.querySelector('#canvas');
 const ctx = canvas.getContext('2d');
 
-const N_WORKERS = 8;
 let workers = [];
 
-for (let i = 0; i < N_WORKERS; ++i) {
-  workers[i] = new Worker('js/worker.js');
-  workers[i].onmessage = onWorkerFinish;
+function updateStatus(s) {
+  document.querySelector('#status').innerText = s;
+}
+
+function updateProgress(s) {
+  document.querySelector('#progress').innerText = s;
+}
+
+function updateWorkers(nWorkers) {
+  workers.map((w) => w.terminate());
+  workers = [];
+
+  for (let i = 0; i < nWorkers; ++i) {
+    workers[i] = new Worker('js/worker.js');
+    workers[i].onmessage = onWorkerFinish;
+  }
+}
+
+function updateSize(size) {
+  let [width, height] = size.split('x');
+  width = Number.parseInt(width);
+  height = Number.parseInt(height);
+
+  canvas.width = width;
+  canvas.height = height;
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
 }
 
 function drawPixel(x, y, color) {
@@ -32,12 +56,12 @@ let workerResults = [];
 function onWorkerFinish(e) {
   workerResults[workerResults.length] = e.data;
 
-  if (workerResults.length != N_WORKERS) {
+  updateProgress(`${workerResults.length}/${workers.length}`);
+  if (workerResults.length != workers.length) {
     return;
   }
 
   const maxIters = Math.max(...workerResults.map((r) => r.result.maxIters));
-  console.log(maxIters);
 
   for (let workerResult of workerResults) {
     const input = workerResult.input;
@@ -60,18 +84,20 @@ function onWorkerFinish(e) {
     }
   }
 
+  updateStatus('Done');
   workerResults = [];
   drawing = false;
 }
 
 function redraw() {
   if (drawing) return;
+  updateStatus('Drawing');
   drawing = true;
 
   const REG_WIDTH = canvas.width;
-  const REG_HEIGHT = Math.ceil(canvas.height / N_WORKERS);
+  const REG_HEIGHT = Math.ceil(canvas.height / workers.length);
 
-  for (let i = 0; i < N_WORKERS; ++i) {
+  for (let i = 0; i < workers.length; ++i) {
     workers[i].postMessage({
       x: 0,
       y: REG_HEIGHT * i,
@@ -93,6 +119,10 @@ function resetView() {
   redraw();
 }
 
+let dragging = false;
+let dragX = 0;
+let dragY = 0;
+
 canvas.addEventListener('wheel', function(wheelEvent) {
   if (wheelEvent.deltaY < 0) {
     zoom *= 1.3;
@@ -102,10 +132,6 @@ canvas.addEventListener('wheel', function(wheelEvent) {
 
   redraw();
 });
-
-let dragging = false;
-let dragX = 0;
-let dragY = 0;
 
 canvas.addEventListener('mousemove', function(e) {
   if (dragging) {
@@ -130,4 +156,7 @@ canvas.addEventListener('mouseup', function(e) {
   dragging = false;
   redraw();
 });
+
+updateWorkers(2);
+redraw();
 
