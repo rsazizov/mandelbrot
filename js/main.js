@@ -26,27 +26,48 @@ let zoom = 1;
 let x = 0;
 let y = 0;
 
+let drawing = false;
+let workerResults = [];
+
 function onWorkerFinish(e) {
-  const input = e.data.input;
-  const result = e.data.result;
+  workerResults[workerResults.length] = e.data;
 
-  for (let i = 0; i < input.width; ++i) {
-    for (let j = 0; j < input.height; ++j) {
-      const nIters = result.iters[i][j] ;
+  if (workerResults.length != N_WORKERS) {
+    return;
+  }
 
-      let color;
-      if (nIters == 0) {
-        color = 'black';
-      } else {
-        color = `hsl(${nIters * 359}, 50%, 50%)`;
+  const maxIters = Math.max(...workerResults.map((r) => r.result.maxIters));
+  console.log(maxIters);
+
+  for (let workerResult of workerResults) {
+    const input = workerResult.input;
+    const result = workerResult.result;
+
+    for (let i = 0; i < input.width; ++i) {
+      for (let j = 0; j < input.height; ++j) {
+        const nIters = result.iters[i][j];
+        const hue = nIters / maxIters * 359;
+
+        let color;
+        if (nIters == 0) {
+          color = 'black';
+        } else {
+          color = `hsl(${hue}, 50%, 50%)`;
+        }
+
+        drawPixel(i + input.x, j + input.y, color);
       }
-
-      drawPixel(i + input.x, j + input.y, color);
     }
   }
+
+  workerResults = [];
+  drawing = false;
 }
 
 function redraw() {
+  if (drawing) return;
+  drawing = true;
+
   const REG_WIDTH = canvas.width;
   const REG_HEIGHT = Math.ceil(canvas.height / N_WORKERS);
 
@@ -63,7 +84,6 @@ function redraw() {
       zoom: zoom
     });
   }
-
 }
 
 function resetView() {
