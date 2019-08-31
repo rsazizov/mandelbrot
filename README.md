@@ -16,7 +16,7 @@ python3 -m http.server
 
 - [x] Escape Time Algorithm
 - [x] Zooming
-- [ ] Optimizations
+- [x] Optimizations
 - [x] Histogram Coloring
 - [ ] Smooth Coloring
-- [ ] Hardware Acceleration
+- [x] Hardware Acceleration
