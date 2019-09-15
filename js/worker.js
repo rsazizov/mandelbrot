@@ -11,7 +11,7 @@ function cardioid(im, re) {
   return q * (q + (im - 0.25)) <= 0.25 * re2;
 }
 
-function mandelbrot(cre, cim, maxIters, threshold) {
+function mandelbrot(cre, cim, maxIters, escapeRadius) {
   if (cardioid(cre, cim)) {
     return [maxIters, 0, 0];
   }
@@ -28,7 +28,7 @@ function mandelbrot(cre, cim, maxIters, threshold) {
     fre2 = fre * fre;
     fim2 = fim * fim;
 
-    if (fre2 + fim2 >= 100) break;
+    if (fre2 + fim2 >= escapeRadius) break;
 
     fim = 2 * fre * fim + cim;
     fre = fre2 - fim2 + cre;
