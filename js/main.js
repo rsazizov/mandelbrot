@@ -128,7 +128,7 @@ function onWorkerFinish(e) {
   }
 
   ctx.putImageData(imgData, 0, 0);
-  updateStatus('Done in ' + (Date.now() - time ));
+  updateStatus('Done in ' + (Date.now() - time) + 'ms');
 
   workerResults = [];
   drawing = false;
