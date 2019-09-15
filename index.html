@@ -8,12 +8,14 @@
   <body>
     <div id="sidebar">
       <h2>View</h2>
+      <p>Use scroll wheel to zoom in and out. Left click and drag to move.</p>
+
       <button id="reset-btn" onclick="resetView()">
         Reset View
       </button>
 
       <h2>Performance</h2>
-      <p>Size</p>
+      <h4>Size</h4>
 
       <select onchange="updateSize(this.value)">
         <option value="320x240">320x240</option>
@@ -22,11 +24,11 @@
         <option value="1280x720">1280x720</option>
       </select>
 
-      <p>Workers</p>
+      <h4>Workers</h4>
       <input onchange="updateWorkers(this.value)" type="number"
         min="1" max="128" value="2">
 
-      <h3>Progress</h3>
+      <h2>Progress</h2>
       <p id="status" />
       <p id="progress" />
     </div>
