@@ -2,7 +2,7 @@
 
 My bare-bones Mandelbrot set generator that uses the [escape time algorithm](https://en.wikipedia.org/wiki/Mandelbrot_set#Escape_time_algorithm) and web workers :racehorse:.
 
-![Sample](https://raw.githubusercontent.com/rsazizov/mandelbrot/master/docs/fractal14.png)
+![Sample](https://raw.githubusercontent.com/rsazizov/mandelbrot/master/docs/fractal15.png)
 
 ## Usage
 
