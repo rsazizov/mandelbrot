@@ -12,3 +12,8 @@ You can play around with it [here](https://rsazizov.github.io/mandelbrot/index.h
 python3 -m http.server
 ```
 
+## Possible Improvements
+
+* Better controls
+* Sampling
+* User-defined palettes
