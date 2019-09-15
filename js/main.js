@@ -3,8 +3,6 @@
 const canvas = document.querySelector('#canvas');
 const ctx = canvas.getContext('2d');
 
-let workers = [];
-
 function updateStatus(s) {
   document.querySelector('#status').innerText = s;
 }
@@ -12,6 +10,8 @@ function updateStatus(s) {
 function updateProgress(s) {
   document.querySelector('#progress').innerText = s;
 }
+
+let workers = [];
 
 function updateWorkers(nWorkers) {
   workers.map((w) => w.terminate());
@@ -89,7 +89,7 @@ function palette(iters, maxIters, r) {
 function onWorkerFinish(e) {
   workerResults[workerResults.length] = e.data;
 
-  updateProgress(`${workerResults.length}/${workers.length}`);
+  updateProgress(`Workers: ${workerResults.length}/${workers.length}`);
 
   // See if all the workers finished.
   if (workerResults.length != workers.length) {
