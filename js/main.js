@@ -35,13 +35,6 @@ function updateSize(size) {
   canvas.style.height = `${height}px`;
 }
 
-function drawPixel(x, y, color) {
-  color = color || 'black';
-
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, 1, 1);
-}
-
 function remap(x, inMin, inMax, outMin, outMax) {
   return ((x - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;
 }
@@ -54,44 +47,56 @@ let drawing = false;
 let time = 0;
 let workerResults = [];
 
-function hslToRgb(h, s, l) {
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  const m = l - c / 2;
+function hsvToRgb(h, s, v) {
+  const i = Math.floor(h * 6);
+  const f = 6 * h - i;
+  const p = v * (1 - s);
+  const q = v * (1 - f * s);
+  const t = v * (1 - (1 - f) * s);
 
-  let r = 0;
-  let g = 0;
-  let b = 0;
+  let r;
+  let g;
+  let b;
 
-  if (0 <= h && h < 60) {
-    r = c; g = x; b = 0;
-  } else if (60 <= h && h < 120) {
-    r = x; g = c; b = 0;
-  } else if (120 <= h && h < 180) {
-    r = 0; g = c; b = x;
-  } else if (180 <= h && h < 240) {
-    r = 0; g = x; b = c;
-  } else if (240 <= h && h < 300) {
-    r = x; g = 0; b = c;
-  } else if (300 <= h && h < 360) {
-    r = c; g = 0; b = x;
+  switch (i % 6) {
+    case 0: r = v, g = t, b = p; break;
+    case 1: r = q, g = v, b = p; break;
+    case 2: r = p, g = v, b = t; break;
+    case 3: r = p, g = q, b = v; break;
+    case 4: r = t, g = p, b = v; break;
+    case 5: r = v, g = p, b = q; break;
   }
 
-  r = Math.round((r + m) * 255);
-  g = Math.round((g + m) * 255);
-  b = Math.round((b + m) * 255);
+  r = Math.round(r * 255);
+  g = Math.round(g * 255);
+  b = Math.round(b * 255);
 
   return [r, g, b];
+}
+
+function palette(iters, maxIters, r) {
+  if (iters == maxIters) {
+    // Interior color.
+    return [0, 0, 0];
+  }
+
+  const v = 5 + 0.6  * Math.log(Math.log(r)) + 0.3;
+  const color = hsvToRgb(180 * v / maxIters, 1, 5 * iters / maxIters);
+
+  return color;
 }
 
 function onWorkerFinish(e) {
   workerResults[workerResults.length] = e.data;
 
   updateProgress(`${workerResults.length}/${workers.length}`);
+
+  // See if all the workers finished.
   if (workerResults.length != workers.length) {
     return;
   }
 
+  // Draw the result on the canvas.
 
   const maxIters = Math.max(...workerResults.map((r) => r.result.maxIters));
 
@@ -107,23 +112,17 @@ function onWorkerFinish(e) {
 
     for (let i = 0; i < input.width; ++i) {
       for (let j = 0; j < input.height; ++j) {
-        const nIters = result.iters[i][j];
-        const hue = nIters / maxIters * 360;
         const id = xyToId(input.x + i, input.y + j) * 4;
 
-        const [r, g, b] = hslToRgb(hue, 0.8, 0.5);
+        const nIters = result.iters[i][j];
+        const radius = result.escapeRadiuses[i][j];
 
-        if (nIters > 0) {
-          imgData.data[id + 0] = r;
-          imgData.data[id + 1] = g;
-          imgData.data[id + 2] = b;
-          imgData.data[id + 3] = 255;
-        } else {
-          imgData.data[id + 0] = 0;
-          imgData.data[id + 1] = 0;
-          imgData.data[id + 2] = 0;
-          imgData.data[id + 3] = 255;
-        }
+        const [r, g, b] = palette(nIters, maxIters, radius);
+
+        imgData.data[id + 0] = r;
+        imgData.data[id + 1] = g;
+        imgData.data[id + 2] = b;
+        imgData.data[id + 3] = 255;
       }
     }
   }
@@ -182,7 +181,7 @@ canvas.addEventListener('wheel', function(wheelEvent) {
 
 canvas.addEventListener('mousemove', function(e) {
   if (dragging) {
-    const FRAC_WIDTH = 3.5 / zoom;
+    const FRAC_WIDTH = 2.6 / zoom;
     const FRAC_HEIGHT = 2 / zoom;
 
     x += remap(dragX - e.offsetX, -canvas.width / 2, canvas.width / 2,
